@@ -1,4 +1,4 @@
-#Electricity Demand Forecasting with DeepAR and Prophet
+# Electricity Demand Forecasting with DeepAR and Prophet
 This repository contains Python code for evaluating Amazon DeepAR and Meta Prophet models for electricity demand forecasting. The methodology employed in this research is outlined below, detailing the steps taken to collect data, prepare it for analysis, develop models, and assess their performance.
 
 - Methodology Overview
