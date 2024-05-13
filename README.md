@@ -2,7 +2,10 @@
 This repository contains Python code for evaluating Amazon DeepAR and Meta Prophet models for electricity demand forecasting. The methodology employed in this research is outlined below, detailing the steps taken to collect data, prepare it for analysis, develop models, and assess their performance.
 
 - Methodology Overview
-The methodology follows a structured approach, as illustrated in Figure 17, to conduct a comprehensive analysis of load forecasting. Here's a brief overview of each step:
+The methodology follows a structured approach, as illustrated in Figure, to conduct a comprehensive analysis of load forecasting. Here's a brief overview of each step:
+
+![image](https://github.com/sdikici/Demand_Forecasting_Prophet_DeepAR/assets/104569884/aa3aec4a-f58d-45bf-8551-9b0db4aa06bc)
+
 
 Data Collection: Two datasets are compiled—one for electricity consumption and another for weather patterns. The electricity dataset includes a binary column indicating holidays.
 
