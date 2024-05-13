@@ -1,0 +1,5 @@
+gradio
+prophet
+numpy
+pandas
+matplotlib
