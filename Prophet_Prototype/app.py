@@ -16,8 +16,19 @@ Original file is located at
 
 pip install gradio
 
+'''
+Use the files.upload() function to upload files from the local system.
+'''
+
 from google.colab import files
 uploaded = files.upload()
+
+'''
+Read the CSV file "merged_data.csv" into a DataFrame df.
+Drop the column 'is_holiday' from the DataFrame df using the drop() function with axis=1.
+Save the modified DataFrame df to a new CSV file named "merged_data_huggingface.csv" using the to_csv() function with index=False.
+Download the CSV file "merged_data_huggingface.csv" using the files.download() function from the google.colab module.
+'''
 
 #df = pd.read_csv("merged_data.csv")
 #df.drop('is_holiday', axis=1, inplace=True)
@@ -32,6 +43,15 @@ import matplotlib.pyplot as plt
 import gradio as gr
 
 def forecast_plot(forecast_days,test_days, days):
+  
+'''
+Plot the forecasted values from forecast_days with a green line and label "Forecast".
+Plot the actual values from test_days with orange points and label "Actual".
+Set the x-axis label to "Date" and the y-axis label to "MGW".
+Set the title of the plot using f-string formatting, including the model number and the days horizon.
+Add a legend to the plot.
+Return the figure object.
+'''
 
   fig, ax = plt.subplots(figsize=(14, 4))
   ax.plot(forecast_days['ds'], forecast_days['yhat'], label='Forecast', color='green')
@@ -44,17 +64,20 @@ def forecast_plot(forecast_days,test_days, days):
   return fig
 
 def mean_absolute_percentage_error(y_true, y_pred):
+    '''Calculate and return the Mean Absolute Percentage Error (MAPE) between actual values (y_true) and predicted values (y_pred).'''
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mape = np.mean(np.abs((y_true - y_pred) / y_true))
     return mape
 
 def root_mean_squared_error(y_true, y_pred):
+    '''Calculate and return the Root Mean Squared Error (RMSE) between actual values (y_true) and predicted values (y_pred).'''
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mse = np.mean((y_true - y_pred) ** 2)
     rmse = np.sqrt(mse)
     return rmse
 
 def r_squared(y_true, y_pred):
+    '''Calculate and return the coefficient of determination (R-squared) value showing the proportion of variance in the dependent variable predictable from the independent variable.'''
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     mean_y_true = np.mean(y_true)
     ss_total = np.sum((y_true - mean_y_true) ** 2)
@@ -63,12 +86,32 @@ def r_squared(y_true, y_pred):
     return r2
 
 def predict_and_evaluate(csv_file, days_to_predict,freq, country_name):
+'''
+The function predict_and_evaluate is designed to forecast electricity demand using the Prophet time series forecasting model and evaluate the forecast accuracy.
+
+Parameters:
+- csv_file: Path to the CSV file containing the historical electricity demand data with columns "ds" (datetime), "y" (target variable), and "temp" (temperature).
+- days_to_predict: Number of days into the future to make predictions for.
+- freq: Frequency of the time series data.
+- country_name: Name of the country code for which the forecast is being made.
+
+Steps:
+1. Read the CSV file into a DataFrame and parse the datetime column.
+2. Split the data into training and testing sets.
+3. Set default values for frequency, days to predict, and country name.
+4. Set parameters for the Prophet model including MCMC samples, changepoint prior scale, and seasonality prior scale.
+5. Fit the Prophet model on the training data, adding country holidays and temperature as regressors.
+6. Create a future DataFrame for prediction, setting regressors for both training and testing data.
+7. Predict future values using the fitted model and calculate forecast metrics including MAPE, RMSE, and R-squared.
+8. Plot the forecast using the forecast_plot function.
+9. Return the forecast metrics and the plot.
+'''
 
     df_model = pd.read_csv(csv_file)
     df_model.columns = ["ds", "y", "temp"]
     df_model['ds'] = pd.to_datetime(df_model['ds'])
 
-
+    #Set parameters for the Prophet model
     split_from = 90 * 12
     train_data = df_model[:-split_from]
     test_data = df_model[-split_from:]
@@ -77,12 +120,14 @@ def predict_and_evaluate(csv_file, days_to_predict,freq, country_name):
     changepoint_prior_scale = 0.05
     mcmc_samples = 50
     periods = days_to_predict * 12
+    #Train and fit the Prophet model
 
     m = Prophet(mcmc_samples=mcmc_samples, changepoint_prior_scale=changepoint_prior_scale,
                 seasonality_prior_scale=seasonality_prior_scale)
     m.add_country_holidays(country_name=country_name)
     m.add_regressor("temp", mode="additive")
     m.fit(train_data)
+    #Create a future DataFrame for prediction, setting regressors for both training and testing data
 
     future = m.make_future_dataframe(periods=periods, freq=freq)
     train_idx = future["ds"].isin(train_data.ds)
@@ -98,8 +143,10 @@ def predict_and_evaluate(csv_file, days_to_predict,freq, country_name):
     forecast_days = forecast[forecast["ds"] >= test_data["ds"].iloc[0]]
     test_days = test_data[(test_data["ds"] >= test_data["ds"].iloc[0]) & (
                 test_data["ds"] <= forecast_days["ds"].iloc[-1])]
+    #Plot the forecast using the forecast_plot function
 
     plot = forecast_plot(forecast_days, test_days, days_to_predict)
+    #Predict future values using the fitted model and calculate forecast metrics
 
     mape = mean_absolute_percentage_error(test_days["y"], forecast_days["yhat"])
     rmse = root_mean_squared_error(test_days["y"], forecast_days["yhat"])
@@ -123,6 +170,22 @@ country_name = "UK" # Set the default value for country to predict
 freq = "2H" # Set the default value for country to predict
 
 predict_and_evaluate(csv_name, days_to_predict, freq, country_name)
+
+
+''' 
+This Gradio interface uses the `predict_and_evaluate` function to forecast electricity demand and evaluate the forecast accuracy. 
+Users can upload a CSV file containing historical electricity demand data, specify the number of days to predict, 
+and provide the data frequency and country code for holidays.
+
+The interface displays evaluation metrics (MAPE, RMSE, R-squared) and a plot comparing forecasted values against actual values.
+
+Example usage: 
+- Upload the file "merged_data_huggingface.csv"
+- Set "Days to Predict" to 30
+- Enter "2H" for data frequency
+- Enter "UK" for the country code
+'''
+
 
 iface = gr.Interface(
     fn=predict_and_evaluate,
